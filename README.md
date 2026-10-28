@@ -1,40 +1,40 @@
-# FMF Studio — Football Manager (Prototype 0.2)
+# FMF Studio — FM21 Extractor Prototype 0.3
 
-A static browser application for inspecting Football Manager `.fmf` files. It is intended as the first reverse-engineering milestone for FM21 skin/resource archives, using `Tato.fmf` as the sample fixture.
+A browser-only Football Manager `.fmf` inspector/extractor. The current parser targets the FMF container structure observed in the supplied FM21 `Tato.fmf` sample.
 
-## Current functions
+## Implemented
 
-- Detects the `02 01 fmf.` signature and nested FMF headers.
-- Finds Zstandard frame signatures and attempts to decompress the index with `fzstd` loaded from jsDelivr.
-- Lists candidate length-prefixed strings from the decompressed index.
-- Scans raw payload for readable text runs and displays offsets.
-- Exports an analysis ZIP containing raw payload, decompressed index, candidate names, and a JSON report.
-- All file processing happens in the browser; no file upload endpoint is used.
+- Detects the top-level FMF header and trailing nested index header.
+- Decompresses the trailing Zstandard index with `fzstd` (CDN; internet required).
+- Parses the directory tree recursively: directory name, file records, and child directories.
+- Validates every file offset and stored length against the payload before extraction.
+- Displays every resource in a searchable list, with type filters.
+- Previews text/XML/fontxml, PNG and common image types; shows a hex preview for other binary resources.
+- Allows text edits in memory and exports the full extracted tree to a ZIP, including edited text.
+- Exports a JSON inventory report.
+- Runs entirely in the browser; the selected FMF is not uploaded to a server by this code.
 
-## Important limitation
+## Not implemented yet
 
-**This is not yet a complete FMF extractor or repacker.** Candidate names are not full verified paths. The app does not yet parse every node record or map each file's data offset and size correctly, so it intentionally does not write guessed files into a fake folder tree. It also cannot rebuild a game-compatible FMF. The analysis ZIP is for reverse engineering only.
+- Rebuilding a game-compatible `.fmf` archive.
+- Replacing binary/image resources from imported files.
+- Validating against the official Resource Archiver output.
+- Handling every FMF variation from every Football Manager release. This prototype is aimed at the tested FM21 `Tato.fmf` layout.
 
-For FM21 graphics/skin archives, the official Football Manager Resource Archiver remains the compatibility reference for extraction and repacking. The goal of future versions is to validate the index parser against official-tool output and then implement safe extraction and repacking.
-
-## Run locally
-
-Because this project uses JavaScript modules, serve the folder over HTTP rather than opening `index.html` as `file://`:
-
-```bash
-python -m http.server 8000
-```
-
-Then visit `http://localhost:8000`.
+Do not rename the extracted ZIP to `.fmf`. A ZIP is not a valid Football Manager archive.
 
 ## Deploy to GitHub Pages
 
-1. Create a repository, for example `fmf-studio`.
-2. Upload the **contents** of this folder to the repository root.
-3. Open Settings → Pages.
-4. Select Deploy from a branch → `main` → `/(root)`.
-5. Open the published Pages URL. Internet access is required for the Zstandard decoder CDN.
+1. Create a repository (for example `fmf-studio`).
+2. Upload the *contents* of this folder to the repository root, including `index.html`, `src/`, `assets/`, and `docs/`.
+3. Go to **Settings → Pages**.
+4. Choose **Deploy from a branch**, branch `main`, folder `/(root)`.
+5. Open the published Pages URL. Internet access is needed to load the Zstandard decoder from jsDelivr.
 
-## Privacy
+## Use on Android
 
-The selected file stays in browser memory. No upload API is called. If you are working with important files, keep an untouched backup.
+Open the GitHub Pages URL in Chrome, select the `.fmf` file, wait for the index to parse, then select **Ekspor folder ke ZIP**. Extract the ZIP with your Android file manager or archive app. You can edit XML/fontxml directly in the app and export another ZIP. At this stage you cannot rebuild the ZIP into a valid `.fmf` from the app.
+
+## Parser assumptions
+
+Index records in the supplied sample are decoded as: length-prefixed directory name; 32-bit file count; for each file, length-prefixed basename and extension followed by five little-endian 64-bit fields (data offset, stored size, unpacked size, timestamp, hash); 32-bit child-directory count; recursive child directory records. The index must be fully consumed and all file ranges must fit the data payload or extraction is refused.
