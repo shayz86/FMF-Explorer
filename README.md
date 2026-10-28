@@ -1,40 +1,46 @@
-# FMF Studio — FM21 Extractor Prototype 0.3
+# FMF Studio — Multi-FMF Explorer v0.4
 
-A browser-only Football Manager `.fmf` inspector/extractor. The current parser targets the FMF container structure observed in the supplied FM21 `Tato.fmf` sample.
+Browser-only Football Manager `.fmf` inspector and extractor, designed to run on Android through GitHub Pages.
 
-## Implemented
+## What changed in v0.4
 
-- Detects the top-level FMF header and trailing nested index header.
-- Decompresses the trailing Zstandard index with `fzstd` (CDN; internet required).
-- Parses the directory tree recursively: directory name, file records, and child directories.
-- Validates every file offset and stored length against the payload before extraction.
-- Displays every resource in a searchable list, with type filters.
-- Previews text/XML/fontxml, PNG and common image types; shows a hex preview for other binary resources.
-- Allows text edits in memory and exports the full extracted tree to a ZIP, including edited text.
-- Exports a JSON inventory report.
-- Runs entirely in the browser; the selected FMF is not uploaded to a server by this code.
-
-## Not implemented yet
-
-- Rebuilding a game-compatible `.fmf` archive.
-- Replacing binary/image resources from imported files.
-- Validating against the official Resource Archiver output.
-- Handling every FMF variation from every Football Manager release. This prototype is aimed at the tested FM21 `Tato.fmf` layout.
-
-Do not rename the extracted ZIP to `.fmf`. A ZIP is not a valid Football Manager archive.
-
-## Deploy to GitHub Pages
-
-1. Create a repository (for example `fmf-studio`).
-2. Upload the *contents* of this folder to the repository root, including `index.html`, `src/`, `assets/`, and `docs/`.
-3. Go to **Settings → Pages**.
-4. Choose **Deploy from a branch**, branch `main`, folder `/(root)`.
-5. Open the published Pages URL. Internet access is needed to load the Zstandard decoder from jsDelivr.
+- The parser no longer requires the exact first two version bytes `02 01`; it checks the printable `fmf.` marker and validates the index structure before accepting a file.
+- Tries multiple nested-header candidates rather than blindly using the last marker.
+- Tries Zstandard frames after each candidate index header and several likely payload-header lengths.
+- Has a fallback attempt for layouts where the compressed index follows the payload without a second visible FMF marker.
+- Reports the detected header version, index mode, payload start offset, and index location.
+- Gives a more useful unsupported-format diagnostic instead of silently treating an unknown archive as valid.
+- Keeps safety checks for path traversal, duplicate resource paths, excessive nesting/node counts, offset overflow, and out-of-bounds data.
+- Tries jsDelivr and unpkg for the Zstandard decoder.
 
 ## Use on Android
 
-Open the GitHub Pages URL in Chrome, select the `.fmf` file, wait for the index to parse, then select **Ekspor folder ke ZIP**. Extract the ZIP with your Android file manager or archive app. You can edit XML/fontxml directly in the app and export another ZIP. At this stage you cannot rebuild the ZIP into a valid `.fmf` from the app.
+1. Upload the *contents* of this folder to the root of a GitHub repository (include `index.html`, `src/`, `assets/`, `docs/`, and `tests/`).
+2. Enable **Settings → Pages → Deploy from a branch → `main` → `/(root)`**.
+3. Open the Pages URL in Chrome, select an `.fmf` file, and wait for index validation.
+4. Use search/filter, select a resource, then choose **Ekspor folder ke ZIP** to export the parsed resource tree.
 
-## Parser assumptions
+The file is processed locally in the browser and is not uploaded by this application. Internet is needed to load the Zstandard decoder. The current safety ceiling is 512 MB because the app reads the selected file into browser memory.
 
-Index records in the supplied sample are decoded as: length-prefixed directory name; 32-bit file count; for each file, length-prefixed basename and extension followed by five little-endian 64-bit fields (data offset, stored size, unpacked size, timestamp, hash); 32-bit child-directory count; recursive child directory records. The index must be fully consumed and all file ranges must fit the data payload or extraction is refused.
+## Compatibility notes — read before use
+
+This is a best-effort adaptive parser, not a guarantee for every Football Manager generation or every `.fmf` file. It supports FMF files whose directory index matches the record schema reverse-engineered from the provided FM21 `Tato.fmf` sample. Some archives can use a different index layout, extra compression layers, or other record schemas; those will be rejected with a diagnostic rather than extracted using guessed offsets.
+
+A successful parse means the index was consumed completely and every resource range fits within the detected payload. It does **not** prove every resource has been decompressed internally or that the file can be rebuilt into a valid `.fmf`.
+
+## Current limits
+
+- Exports the extracted directory tree as ZIP.
+- Text edits are held in browser memory and included in the exported ZIP.
+- Image preview is supported for common image formats.
+- Does not rebuild `.fmf` yet. Do not rename a ZIP to `.fmf`.
+- Some resource types may themselves be compressed or use proprietary encoding; these are currently exposed as stored bytes.
+- No claim of compatibility for every FMF file has been made; use the report and keep an untouched original backup.
+
+## Parser schema currently supported
+
+The observed index schema is recursive: length-prefixed UTF-8 directory name; 32-bit file count; for each file, length-prefixed basename and extension followed by five little-endian 64-bit values (data offset, stored size, unpacked size, timestamp, hash); 32-bit child-directory count; then recursive child directory records.
+
+## Test
+
+Open `tests/parser-smoke.html` from the deployed site to run the small index-parser smoke test. This tests the index-record reader only; it is not a compatibility test for arbitrary real-world FMF archives.
