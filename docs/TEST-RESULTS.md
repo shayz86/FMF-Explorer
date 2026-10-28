@@ -1,11 +1,16 @@
-# Test results for the supplied sample
+# Test result: supplied Tato.fmf sample
 
-Read-only probe run on `Tato.fmf`:
+Validated with an independent local probe using the same recursive index schema:
 
-- File size: 6,706,636 bytes.
-- FMF signatures: offsets `0` and `6,694,155`.
-- Zstandard frame signature: offset `6,694,168`.
-- Decompressed output from the final frame using Zstandard CLI: 48,805 bytes.
-- Raw first segment extracted to a separate `.bin` file: 6,694,129 bytes.
+- Input size: 6,706,636 bytes
+- Top-level payload: 6,694,129 bytes
+- Decompressed index: 48,805 bytes
+- Directory records: 126
+- File records: 704
+- File offset/size ranges within payload: 704 / 704
+- Text/XML/fontxml: 413
+- Images by extension: 286
+- Fonts: 5
+- Other binary files: 0
 
-These results confirm the segment detection and Zstandard frame extraction path for this sample. They do **not** confirm full folder reconstruction or successful FMF rebuilding.
+The application performs these checks in-browser at runtime. The values above are for the supplied sample only; the prototype does not claim that every FMF variant follows this exact layout.
