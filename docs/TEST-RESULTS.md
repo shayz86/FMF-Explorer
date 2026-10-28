@@ -1,16 +1,13 @@
-# Test result: supplied Tato.fmf sample
+# Test results — v0.4
 
-Validated with an independent local probe using the same recursive index schema:
+## Static checks
 
-- Input size: 6,706,636 bytes
-- Top-level payload: 6,694,129 bytes
-- Decompressed index: 48,805 bytes
-- Directory records: 126
-- File records: 704
-- File offset/size ranges within payload: 704 / 704
-- Text/XML/fontxml: 413
-- Images by extension: 286
-- Fonts: 5
-- Other binary files: 0
+- JavaScript syntax checks are run before packaging.
+- The index reader smoke test constructs a minimal synthetic directory index and checks that one file record is decoded.
+- Safety validation rejects invalid path components, duplicate file paths, excessive nesting/node counts, and file ranges outside the payload.
 
-The application performs these checks in-browser at runtime. The values above are for the supplied sample only; the prototype does not claim that every FMF variant follows this exact layout.
+## Compatibility status
+
+- `Tato.fmf` from the conversation is the known sample used to derive the parser schema in v0.3.
+- v0.4 adds adaptive candidate search around that schema. This environment did not run the browser CDN Zstandard module against a new set of independent FMF samples; support for other FMF files is therefore **not guaranteed** until users test them and share the diagnostic report for unsupported files.
+- Rebuilding FMF is not implemented.

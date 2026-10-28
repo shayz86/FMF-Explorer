@@ -1,7 +1,18 @@
-# FMF21 format notes from Tato.fmf
+# FMF format research notes
 
-The supplied sample begins with `02 01 66 6d 66 2e` (`02 01 fmf.`). A second such header appears near the end, followed by a Zstandard frame. The main resource payload lies between byte 26 and that nested header. Decompressing the trailing Zstandard frame yields a directory index.
+## Observed from `Tato.fmf`
 
-The index parser used by this prototype is recursive. Each directory record starts with a length-prefixed UTF-8 directory name, followed by a 32-bit file count. File records contain length-prefixed basename and extension strings, then five little-endian 64-bit fields. A 32-bit child-directory count follows, and child directory records recurse. In the sample, the parsed index is consumed exactly and all file offset/length ranges fit the payload.
+- Starts with `02 01 fmf.`.
+- A second `02 01 fmf.` marker appears near the end.
+- A Zstandard frame follows that nested marker.
+- The payload in this sample begins at byte offset 26 and ends at the nested marker.
+- Decompressing the trailing Zstandard frame yields a recursive directory index.
+- The index record schema used by this parser: length-prefixed UTF-8 directory name; 32-bit file count; each file has length-prefixed basename and extension, then five little-endian 64-bit fields; 32-bit child-directory count; recursive child directory records.
 
-This is empirical reverse engineering for the sample, not a guarantee for every FMF generation. A future writer must preserve field widths, timestamps/hash semantics, index compression, archive headers, and any alignment rules. Repacking must not be added until tested with independent known-good archives.
+## Adaptive detection in v0.4
+
+The parser checks for the printable `fmf.` marker at offset +2 instead of requiring the exact version bytes `02 01`. It tries all nested FMF marker candidates, Zstandard frames following those candidates, and a list of candidate payload starts. It accepts only a fully consumed index whose resource ranges are inside the candidate payload. If no candidate passes, it reports the file as unsupported instead of exporting guessed data.
+
+## Important limitations
+
+This is reverse engineering from one known-good sample, not an official specification. The adaptive search may support other archives that share the same record schema, but it cannot guarantee support for every Football Manager version or every `.fmf` file. It currently does not infer alternate record schemas or nested per-resource compression. The parser's successful validation checks structural consistency, not semantic correctness of each extracted resource. No FMF writer is included.
