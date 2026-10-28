@@ -1,7 +1,9 @@
 import { inspectFMF, extractEntry } from './fmf-parser.js';
 import { createZip } from './zip-writer.js';
+import { patchFMFFromEditedZip } from './fmf-builder.js';
 const $ = s => document.querySelector(s);
 let state = null;
+let originalFile = null;
 let selected = null;
 let edits = new Map();
 let objectUrl = null;
@@ -10,7 +12,7 @@ const escapeHTML = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&l
 function status(msg, kind='') { const el=$('#status'); el.textContent=msg; el.className=`status ${kind}`.trim(); }
 function download(blob,name){ const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=name; document.body.append(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url),5000); }
 function loadBytesAsText(bytes){ return new TextDecoder('utf-8',{fatal:false}).decode(bytes); }
-function loadFile(file){ if(!file)return; $('#welcome').hidden=true; $('#workspace').hidden=false; $('#newFileBtn').hidden=false; status(`Membaca ${file.name} (${fmt(file.size)})…`); $('#fileList').innerHTML=''; $('#viewer').textContent='Memindai…'; edits=new Map(); selected=null; if(objectUrl){URL.revokeObjectURL(objectUrl);objectUrl=null;}
+function loadFile(file){ if(!file)return; originalFile=file; $('#welcome').hidden=true; $('#workspace').hidden=false; $('#newFileBtn').hidden=false; status(`Membaca ${file.name} (${fmt(file.size)})…`); $('#fileList').innerHTML=''; $('#viewer').textContent='Memindai…'; edits=new Map(); selected=null; if(objectUrl){URL.revokeObjectURL(objectUrl);objectUrl=null;}
   inspectFMF(file, msg=>status(msg)).then(result=>{state=result; $('#statSize').textContent=fmt(result.report.fileSize); $('#statFiles').textContent=result.files.length.toLocaleString('id-ID'); $('#statDirs').textContent=result.directories.length.toLocaleString('id-ID'); $('#statText').textContent=result.report.textCount.toLocaleString('id-ID'); $('#statImages').textContent=result.report.imageCount.toLocaleString('id-ID'); $('#fileNameTitle'); $('#filterInput').value=''; $('#kindFilter').value='all'; renderFiles(); status(`Berhasil membaca FMF: ${result.files.length} file dalam ${result.directories.length} folder. Header ${result.report.topHeaderVersion}; layout ${result.report.indexMode}; payload mulai 0x${result.report.payloadStartOffset.toString(16).toUpperCase()}. Seluruh rentang tervalidasi.`, 'good'); $('#viewerTitle').textContent='Pilih file'; $('#viewerMeta').textContent=`${result.report.parser} · versi header ${result.report.topHeaderVersion} · indeks ${result.report.indexMode}`; $('#viewer').className='viewer-empty'; $('#viewer').textContent='Isi file akan tampil di sini.'; }).catch(err=>{state=null; status(`Gagal membaca FMF: ${err.message||err}`, 'error'); $('#viewer').className='viewer-empty'; $('#viewer').textContent='Parser tidak dapat memvalidasi struktur file ini. Tidak ada file yang diekspor.';}); }
 $('#fileInput').addEventListener('change',e=>loadFile(e.target.files?.[0]));
 $('#newFileBtn').addEventListener('click',()=>{$('#fileInput').value='';$('#fileInput').click()});
@@ -29,4 +31,27 @@ function selectFile(entry){selected=entry;renderFiles(); if(objectUrl){URL.revok
 }
 $('#saveEditBtn').addEventListener('click',()=>{if(!selected)return;const text=$('#textEditor')?.value;if(text==null)return;edits.set(selected.path,new TextEncoder().encode(text));$('#saveEditBtn').textContent='Edit tersimpan';status(`Edit disimpan di memori browser: ${selected.path}. Ekspor ZIP untuk mengunduh hasilnya.`, 'good');renderFiles();});
 $('#exportBtn').addEventListener('click',()=>{if(!state)return;try{const files=state.files.map(f=>({name:f.path,data:currentData(f)}));const blob=createZip(files); const base=state.report.fileName.replace(/\.fmf$/i,'');download(blob,`${base}-extracted.zip`);status(`ZIP hasil ekstraksi dibuat: ${files.length} file. ${edits.size} file berisi perubahan edit. ZIP ini bukan arsip FMF.`, 'good');}catch(e){status(`Ekspor gagal: ${e.message||e}`,'error');}});
+
+$('#buildBtn').addEventListener('click',()=>{
+  if(!state || !originalFile){ status('Buka dan validasi FMF asli terlebih dahulu.','error'); return; }
+  $('#editedZipInput').value='';
+  $('#editedZipInput').click();
+});
+$('#editedZipInput').addEventListener('change', async e=>{
+  const zipFile=e.target.files?.[0];
+  if(!zipFile || !state || !originalFile)return;
+  const btn=$('#buildBtn'); btn.disabled=true; btn.textContent='Build berjalan…';
+  try {
+    const result=await patchFMFFromEditedZip(originalFile,zipFile,msg=>status(msg));
+    download(result.blob,result.fileName);
+    status(`FMF berhasil dibuat dengan patch ukuran tetap. Resource berubah: ${result.changed}; tidak berubah: ${result.unchanged}; total data berubah: ${fmt(result.totalBytes)}. Header, indeks, offset, dan ukuran kontainer asli dipertahankan.`, 'good');
+    $('#viewerTitle').textContent='Build FMF selesai';
+    $('#viewerMeta').textContent=`${result.fileName} · ${fmt(result.originalSize)}`;
+    $('#viewer').className='viewer-empty';
+    $('#viewer').textContent='File FMF hasil patch sudah diunduh. Uji dengan salinan cadangan dan jangan menimpa file asli.';
+  } catch(err) {
+    status(`Build FMF dibatalkan: ${err?.message||err}`, 'error');
+  } finally { btn.disabled=false; btn.textContent='Build FMF dari ZIP edit'; }
+});
+
 $('#reportBtn').addEventListener('click',()=>{if(!state)return;const report={...state.report,editedFiles:[...edits.keys()],files:state.files.map(({name,path,offset,storedSize,unpackedSize,kind,boundsOK})=>({name,path,offset,storedSize,unpackedSize,kind,boundsOK}))};download(new Blob([JSON.stringify(report,null,2)],{type:'application/json'}),state.report.fileName.replace(/\.fmf$/i,'')+'-report.json');});
