@@ -1,0 +1,5 @@
+<!doctype html><meta charset="utf-8"><title>FMF Studio smoke test</title><pre id="out">Running…</pre><script type="module">
+import {findAll,FMF_MAGIC,ZSTD_MAGIC,candidateNames} from '../src/fmf-core.js';
+const enc=new TextEncoder();const fake=new Uint8Array([...FMF_MAGIC,1,2,...ZSTD_MAGIC]);const checks=[['FMF header',findAll(fake,FMF_MAGIC).length===1],['Zstandard marker',findAll(fake,ZSTD_MAGIC).length===1],['candidate parser',candidateNames(new Uint8Array([...new Uint8Array([4,0,0,0]),...enc.encode('Tato')])).some(x=>x.name==='Tato')]];
+document.querySelector('#out').textContent=checks.map(([n,ok])=>(ok?'PASS':'FAIL')+' '+n).join('\n');if(checks.some(x=>!x[1]))throw new Error('Smoke test failed');
+</script>
