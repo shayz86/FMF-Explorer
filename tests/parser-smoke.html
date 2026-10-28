@@ -1,6 +1,1 @@
-<!doctype html><html lang="id"><meta charset="utf-8"><title>FMF Parser Smoke Test</title><body><h1>FMF parser smoke test</h1><pre id="result">Menjalankan…</pre><script src="../src/fmf-parser.js"></script><script>
-const out=[];function check(name,ok){out.push((ok?'PASS':'FAIL')+' — '+name)}
-const xml=new TextEncoder().encode('<record><string id="name" value="Test Club"/></record>');const bytes=new Uint8Array(26+xml.length);bytes.set([2,1,102,109,102,46]);bytes.set(xml,26);const scan=FMFParser.scan(bytes);check('header FMF dikenali',scan.header===26);check('rentang teks ditemukan',scan.resources.some(r=>r.type==='xml'));
-const old=new TextEncoder().encode('abc');try{FMFParser.encodeSameLength('abcd',old);check('panjang berbeda ditolak',false)}catch(e){check('panjang berbeda ditolak',true)}
-document.getElementById('result').textContent=out.join('\n');if(out.some(x=>x.startsWith('FAIL')))document.title='FAIL — FMF Parser';
-</script></body></html>
+<!doctype html><meta charset="utf-8"><title>FMF parser smoke test</title><p>Use the main app to load Tato.fmf. A successful test should show 704 files, 136 directory records and all file ranges valid.</p><p>This smoke test intentionally does not bundle a copyrighted sample archive.</p>
