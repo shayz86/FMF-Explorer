@@ -5,17 +5,23 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#101827">
   <meta name="description" content="FMF Studio: ekstraktor dan penjelajah arsip resource Football Manager berbasis browser dengan deteksi format otomatis.">
-  <title>FMF Studio by Sayyid H.</title>
+  <title>FMF Studio — Multi-FMF + ZIP Builder</title>
   <link rel="stylesheet" href="./assets/styles.css">
 </head>
 <body>
-<header class="topbar"><div class="brand"><div class="logo">FM</div><div><strong>FMF Studio v2.0 by Sayyid H.</strong><small>Football Manager · Multi-FMF Explorer</small></div></div><button id="newFileBtn" class="button secondary" hidden>Buka FMF lain</button></header>
+<header class="topbar"><div class="brand"><div class="logo">FM</div><div><strong>FMF Studio</strong><small>Football Manager · Multi-FMF Explorer & Builder</small></div></div><button id="newFileBtn" class="button secondary" hidden>Buka FMF lain</button></header>
 <main class="container">
   <section id="welcome" class="welcome panel">
-    <div class="hero-icon">▤</div><h1>Ekstrak FMF menjadi folder & file</h1>
-    <p>Pilih file <b>.fmf</b> dari Football Manager. Parser akan mencoba beberapa variasi header dan indeks secara otomatis, memvalidasi struktur direktori serta rentang data, lalu menampilkan resource yang berhasil dikenali.</p>
-    <label class="file-button button primary" for="fileInput">Pilih file FMF</label><input id="fileInput" type="file" accept=".fmf,application/octet-stream">
-    <p class="fine">Dirancang untuk Android. Pemrosesan dilakukan di browser; decoder Zstandard dimuat dari CDN sehingga perlu koneksi internet. File tidak diunggah ke server. FMF dari versi lain yang memakai struktur indeks berbeda mungkin belum didukung.</p>
+    <div class="hero-icon">▤</div><h1>FMF Studio</h1><div id="welcomeStatus" class="status">Siap. Pilih salah satu alur kerja di bawah.</div>
+    <p>Pilih alur kerja yang ingin kamu lakukan. Kamu bisa membuka arsip FMF untuk melihat dan mengekstrak resource, atau langsung membangun FMF dari ZIP hasil ekstraksi yang sudah diedit.</p>
+    <div class="start-options">
+      <div class="start-card"><div class="start-symbol">📂</div><h2>Buka / Ekstrak FMF</h2><p>Memindai arsip, menampilkan folder dan resource, melihat teks serta gambar, lalu mengekspor resource ke ZIP.</p><label class="file-button button primary" for="fileInput">Pilih file FMF</label></div>
+      <div class="start-card"><div class="start-symbol">📦</div><h2>Build FMF dari ZIP</h2><p>Pilih ZIP hasil ekstraksi yang sudah diedit. ZIP yang dibuat oleh versi ini menyertakan salinan arsip sumber agar proses build tidak perlu memilih FMF lagi.</p><button id="startBuildBtn" class="button primary" type="button">Pilih ZIP untuk Build FMF</button></div>
+    </div>
+    <input id="fileInput" type="file" accept=".fmf,application/octet-stream" hidden>
+    <input id="startBuildZipInput" type="file" accept=".zip,application/zip" hidden>
+    <input id="fallbackFmfInput" type="file" accept=".fmf,application/octet-stream" hidden>
+    <p class="fine">Dirancang untuk Android. Pemrosesan dilakukan di browser; decoder Zstandard dan pembaca ZIP dimuat dari CDN sehingga perlu koneksi internet. File diproses secara lokal di browser. FMF dengan format indeks berbeda mungkin belum didukung.</p>
   </section>
   <section id="workspace" hidden>
     <div id="status" class="status">Siap.</div>
