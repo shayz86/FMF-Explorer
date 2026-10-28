@@ -1,46 +1,29 @@
-# FMF Studio — Multi-FMF Explorer v0.4
+# FMF Studio FM21 v0.5 — same-length FMF patch builder
 
-Browser-only Football Manager `.fmf` inspector and extractor, designed to run on Android through GitHub Pages.
+Browser-only FMF inspector/extractor for Android and GitHub Pages. This version adds a conservative **Build FMF from edited ZIP** workflow.
 
-## What changed in v0.4
+## What the builder actually does
 
-- The parser no longer requires the exact first two version bytes `02 01`; it checks the printable `fmf.` marker and validates the index structure before accepting a file.
-- Tries multiple nested-header candidates rather than blindly using the last marker.
-- Tries Zstandard frames after each candidate index header and several likely payload-header lengths.
-- Has a fallback attempt for layouts where the compressed index follows the payload without a second visible FMF marker.
-- Reports the detected header version, index mode, payload start offset, and index location.
-- Gives a more useful unsupported-format diagnostic instead of silently treating an unknown archive as valid.
-- Keeps safety checks for path traversal, duplicate resource paths, excessive nesting/node counts, offset overflow, and out-of-bounds data.
-- Tries jsDelivr and unpkg for the Zstandard decoder.
+1. Open and validate the original `.fmf` in FMF Studio.
+2. Export the resource tree to ZIP, or edit the exported ZIP externally while preserving every path.
+3. In the same session, click **Build FMF dari ZIP edit** and select the edited ZIP.
+4. The builder checks that the ZIP contains exactly the same resource paths and that each resource byte length equals the original stored size.
+5. It patches resource bytes into a copy of the original FMF at validated offsets and downloads `*-edited.fmf`.
 
-## Use on Android
+This preserves the original container header, offsets, index, and trailing compressed index frame. It does **not** reserialize the index and does not support adding/removing/renaming files, changing folder structure, or changing any resource's byte length. Such cases are rejected. Never rename a ZIP to `.fmf`.
 
-1. Upload the *contents* of this folder to the root of a GitHub repository (include `index.html`, `src/`, `assets/`, `docs/`, and `tests/`).
-2. Enable **Settings → Pages → Deploy from a branch → `main` → `/(root)`**.
-3. Open the Pages URL in Chrome, select an `.fmf` file, and wait for index validation.
-4. Use search/filter, select a resource, then choose **Ekspor folder ke ZIP** to export the parsed resource tree.
+## Important limits
 
-The file is processed locally in the browser and is not uploaded by this application. Internet is needed to load the Zstandard decoder. The current safety ceiling is 512 MB because the app reads the selected file into browser memory.
+- Parser support is based on the observed recursive index schema from the supplied FM21 `Tato.fmf`; other FMF layouts may be rejected.
+- Some resources may have their own internal compression or encoding. The extractor currently returns stored resource bytes, not necessarily decoded content for every resource type.
+- Same-length patching is only a first, conservative build mode. It is not a general FMF packer and is not guaranteed to make arbitrary resource edits valid in game.
+- Before using in-game, keep the original backup and validate the output in Football Manager 2021. A proper general builder still needs a verified FMF writer, index reserialization, compression and hash semantics.
+- The app processes files locally in the browser. It loads the Zstandard decoder and JSZip from public CDNs, so internet is required. Files are not uploaded by the app.
 
-## Compatibility notes — read before use
+## Deploy to GitHub Pages
 
-This is a best-effort adaptive parser, not a guarantee for every Football Manager generation or every `.fmf` file. It supports FMF files whose directory index matches the record schema reverse-engineered from the provided FM21 `Tato.fmf` sample. Some archives can use a different index layout, extra compression layers, or other record schemas; those will be rejected with a diagnostic rather than extracted using guessed offsets.
+Upload the contents of this directory to the repository root, then enable Settings → Pages → Deploy from a branch → `main` → `/(root)`.
 
-A successful parse means the index was consumed completely and every resource range fits within the detected payload. It does **not** prove every resource has been decompressed internally or that the file can be rebuilt into a valid `.fmf`.
+## Tests
 
-## Current limits
-
-- Exports the extracted directory tree as ZIP.
-- Text edits are held in browser memory and included in the exported ZIP.
-- Image preview is supported for common image formats.
-- Does not rebuild `.fmf` yet. Do not rename a ZIP to `.fmf`.
-- Some resource types may themselves be compressed or use proprietary encoding; these are currently exposed as stored bytes.
-- No claim of compatibility for every FMF file has been made; use the report and keep an untouched original backup.
-
-## Parser schema currently supported
-
-The observed index schema is recursive: length-prefixed UTF-8 directory name; 32-bit file count; for each file, length-prefixed basename and extension followed by five little-endian 64-bit values (data offset, stored size, unpacked size, timestamp, hash); 32-bit child-directory count; then recursive child directory records.
-
-## Test
-
-Open `tests/parser-smoke.html` from the deployed site to run the small index-parser smoke test. This tests the index-record reader only; it is not a compatibility test for arbitrary real-world FMF archives.
+Open `tests/parser-smoke.html` for the index parser smoke test. Browser-level end-to-end tests against multiple official FMF generations are not yet available.

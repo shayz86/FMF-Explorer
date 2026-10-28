@@ -5,11 +5,11 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#101827">
   <meta name="description" content="FMF Studio: ekstraktor dan penjelajah arsip resource Football Manager berbasis browser dengan deteksi format otomatis.">
-  <title>FMF Studio by Sayyid H.</title>
+  <title>FMF Studio — Multi-FMF</title>
   <link rel="stylesheet" href="./assets/styles.css">
 </head>
 <body>
-<header class="topbar"><div class="brand"><div class="logo">FM</div><div><strong>FMF Studio v1.2 by Sayyid H.</strong><small>Football Manager · Multi-FMF Explorer</small></div></div><button id="newFileBtn" class="button secondary" hidden>Buka FMF lain</button></header>
+<header class="topbar"><div class="brand"><div class="logo">FM</div><div><strong>FMF Studio</strong><small>Football Manager · Multi-FMF Explorer</small></div></div><button id="newFileBtn" class="button secondary" hidden>Buka FMF lain</button></header>
 <main class="container">
   <section id="welcome" class="welcome panel">
     <div class="hero-icon">▤</div><h1>Ekstrak FMF menjadi folder & file</h1>
@@ -30,13 +30,15 @@
       <input id="filterInput" type="search" placeholder="Filter nama atau path file…" aria-label="Filter file">
       <select id="kindFilter" aria-label="Filter jenis"><option value="all">Semua jenis</option><option value="text">XML / Teks</option><option value="image">Gambar</option><option value="font">Font</option><option value="binary">Biner lainnya</option></select>
       <button id="exportBtn" class="button primary">Ekspor folder ke ZIP</button>
+      <button id="buildBtn" class="button secondary">Build FMF dari ZIP edit</button>
+      <input id="editedZipInput" type="file" accept=".zip,application/zip" hidden>
       <button id="reportBtn" class="button secondary">Unduh laporan</button>
     </div>
     <div class="main-grid">
       <section class="panel file-panel"><div class="panel-title"><h2>Isi arsip</h2><span id="shownCount" class="pill">0 file</span></div><div id="fileList" class="file-list"></div></section>
       <section class="panel viewer-panel"><div class="panel-title"><div><h2 id="viewerTitle">Pilih file</h2><p id="viewerMeta" class="muted">Pilih item di daftar sebelah kiri.</p></div><button id="saveEditBtn" class="button primary" hidden>Simpan edit</button></div><div id="viewer" class="viewer-empty">Isi file akan tampil di sini.</div></section>
     </div>
-    <div class="footer-note panel"><b>Catatan versi ini:</b> parser mencoba beberapa variasi struktur FMF dan hanya mengekstrak bila indeks terbaca penuh serta seluruh rentang data tervalidasi. FMF yang format indeksnya berbeda akan ditolak dengan diagnostik. Mengedit teks dan mengekspor ZIP didukung; membuat ulang ZIP menjadi arsip <code>.fmf</code> belum tersedia.</div>
+    <div class="footer-note panel"><b>Build FMF v0.5:</b> pilih ZIP hasil ekstraksi yang sudah diedit untuk menerapkan perubahan ke FMF asli. Mode aman hanya menerima file yang ukurannya dalam byte tetap sama dan struktur path lengkap tidak berubah; indeks dan semua byte lain dipertahankan. File dengan ukuran berubah akan ditolak, bukan dipaksa menjadi FMF rusak. Ini patcher terbatas, belum pembuat arsip FMF dari folder arbitrer.</div>
   </section>
 </main>
 <script type="module" src="./src/app.js"></script>
