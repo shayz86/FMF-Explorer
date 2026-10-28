@@ -1,20 +1,27 @@
 <!doctype html>
 <html lang="id">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#10151f"><meta name="description" content="Editor lokal untuk memeriksa dan mengedit resource Football Manager FMF.">
-<title>FMF Studio — Football Manager Resource Explorer</title><link rel="manifest" href="manifest.json"><link rel="stylesheet" href="assets/styles.css">
-</head><body>
-<header class="topbar"><div class="brand"><div class="logo">FM</div><div><strong>FMF Studio</strong><small>Football Manager Resource Explorer</small></div></div><div class="top-actions"><button id="openBtn" class="primary">Buka file FMF</button><button id="saveBtn" disabled>Ekspor FMF</button><input id="fileInput" type="file" accept=".fmf,.xml,.txt,.bin,*/*" hidden></div></header>
-<main>
-<section id="welcome" class="welcome"><div class="hero-icon">⚽</div><h1>Jelajahi isi file Football Manager</h1><p>Buka file <code>.fmf</code> untuk memindai teks, XML, gambar, dan blok biner secara otomatis—tanpa perlu mencari dahulu.</p><button id="welcomeOpen" class="primary big">Pilih file FMF</button><div class="privacy">Pemrosesan dilakukan di browser perangkatmu. File tidak diunggah ke server.</div></section>
-<section id="workspace" class="workspace" hidden>
-<div class="filebar"><div class="fileidentity"><span class="fileglyph">▣</span><div><strong id="fileName">—</strong><small id="fileMeta">—</small></div></div><div class="filebar-actions"><button id="undoBtn" disabled>↶ Undo</button><button id="redoBtn" disabled>↷ Redo</button><button id="revertBtn" disabled>Batalkan semua</button></div></div>
-<div class="stats" id="stats"></div>
-<div class="layout"><aside class="sidebar"><div class="side-head"><strong>Isi file</strong><span id="itemCount" class="count">0</span></div><input id="filterInput" class="filter" placeholder="Filter nama, teks, tipe…"><div class="filter-row"><button class="filter-chip active" data-filter="all">Semua</button><button class="filter-chip" data-filter="text">Teks/XML</button><button class="filter-chip" data-filter="image">Gambar</button><button class="filter-chip" data-filter="binary">Biner</button></div><div id="resourceList" class="resource-list"></div></aside>
-<section class="editor"><div class="editor-head"><div><span id="kindBadge" class="kind">BELUM DIPILIH</span><h2 id="resourceTitle">Pilih bagian file</h2><p id="resourceSubtitle">Daftar konten akan muncul setelah file dibuka.</p></div><div class="editor-tools"><button id="copyBtn" disabled>Salin</button><button id="downloadPartBtn" disabled>Ekspor bagian</button></div></div><div id="editorBody" class="editor-body"><div class="empty-editor"><div>▤</div><strong>Belum ada bagian dipilih</strong><span>Pilih item dari panel kiri untuk melihat detailnya.</span></div></div><div id="editFooter" class="edit-footer" hidden><span id="lengthInfo">—</span><button id="applyBtn" class="primary" disabled>Terapkan perubahan</button></div></section></div>
-<div id="notice" class="notice" role="status"></div>
-</section>
-</main><footer>FMF Studio • Editor eksperimental untuk file Football Manager • Selalu simpan salinan cadangan.</footer>
-<script src="src/fmf-parser.js"></script><script src="src/app.js"></script>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#111827"><meta name="description" content="FMF Studio — alat inspeksi dan ekstraksi eksperimental untuk arsip Football Manager.">
+  <title>FMF Studio — Football Manager</title><link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+<header class="topbar"><div class="brandmark">FM</div><div><div class="brand">FMF Studio</div><div class="subbrand">Football Manager archive workshop</div></div><span class="version">Prototype 0.2</span></header>
+<main class="wrap">
+  <section class="hero"><p class="eyebrow">FOOTBALL MANAGER RESOURCE TOOL</p><h1>Inspect. Extract. Understand.</h1><p class="lead">Buka file <code>.fmf</code>, lihat segmen arsip dan metadata yang ditemukan, lalu ekspor paket analisis tanpa mengubah file asli.</p></section>
+  <section class="dropzone" id="dropzone"><input id="fileInput" type="file" accept=".fmf,application/octet-stream"><div class="uploadicon">↑</div><h2>Pilih file FMF</h2><p>Ketuk untuk memilih file dari perangkat atau seret file ke sini.</p><button id="chooseBtn" class="primary">Pilih file</button><p class="privacy">Pemrosesan dilakukan di browser. File tidak diunggah ke server.</p></section>
+  <section id="workspace" class="hidden">
+    <div class="filehead"><div><div class="eyebrow">FILE AKTIF</div><h2 id="fileName">—</h2><p id="fileSummary" class="muted"></p></div><button id="resetBtn" class="secondary">Tutup file</button></div>
+    <div id="statusBox" class="status info"></div>
+    <div class="stats"><div class="stat"><span>Ukuran file</span><strong id="statSize">—</strong></div><div class="stat"><span>Segmen FMF</span><strong id="statSegments">—</strong></div><div class="stat"><span>Rentang teks</span><strong id="statText">—</strong></div><div class="stat"><span>Nama kandidat</span><strong id="statNames">—</strong></div></div>
+    <nav class="tabs"><button class="tab active" data-tab="overview">Ringkasan</button><button class="tab" data-tab="segments">Segmen</button><button class="tab" data-tab="names">Nama resource</button><button class="tab" data-tab="text">Penjelajah teks</button></nav>
+    <section id="tab-overview" class="panel"><h3>Hasil pemindaian</h3><div id="overviewContent"></div><div class="notice"><strong>Penting:</strong> paket ekspor saat ini berisi payload mentah dan indeks hasil dekompresi untuk analisis. Ini belum sama dengan ekstraksi lengkap ke file/folder asli dan belum membuat ulang arsip FMF.</div><button id="exportBtn" class="primary">Ekspor paket analisis ZIP</button></section>
+    <section id="tab-segments" class="panel hidden"><h3>Segmen arsip</h3><p class="muted">Header FMF dan rentang data yang dapat dipisahkan secara konservatif.</p><div id="segmentList" class="list"></div></section>
+    <section id="tab-names" class="panel hidden"><div class="rowhead"><div><h3>Nama resource kandidat</h3><p class="muted">Ditemukan dari string berawalan panjang UTF-8 pada indeks. Jalur folder belum dianggap pasti.</p></div><input id="nameFilter" class="search" placeholder="Filter nama…"></div><div id="nameList" class="namegrid"></div></section>
+    <section id="tab-text" class="panel hidden"><div class="rowhead"><div><h3>Penjelajah teks</h3><p class="muted">Cuplikan teks yang ditemukan dalam payload mentah.</p></div><input id="textFilter" class="search" placeholder="Cari dalam cuplikan…"></div><div id="textList" class="list"></div></section>
+  </section>
+  <section class="limits"><h3>Yang didukung pada prototype ini</h3><div class="limitgrid"><div><b>✓</b><span>Mendeteksi header FMF dan segmen bersarang</span></div><div><b>✓</b><span>Mendekompresi frame Zstandard yang dikenali</span></div><div><b>✓</b><span>Menampilkan kandidat nama resource dan cuplikan teks</span></div><div><b>✓</b><span>Mengekspor payload dan indeks untuk dianalisis</span></div><div><b>—</b><span>Rekonstruksi struktur folder dan file lengkap</span></div><div><b>—</b><span>Membangun ulang FMF yang kompatibel dengan FM21</span></div></div></section>
+  <footer>FMF Studio adalah proyek komunitas eksperimental, bukan produk resmi Sports Interactive. Simpan salinan asli sebelum bereksperimen.</footer>
+</main>
+<script type="module" src="src/app.js"></script>
 </body></html>

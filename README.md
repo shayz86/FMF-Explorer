@@ -1,41 +1,40 @@
-# FMF Studio — Football Manager Resource Explorer
+# FMF Studio — Football Manager (Prototype 0.2)
 
-Aplikasi web statis untuk memeriksa file `.fmf` Football Manager langsung di browser. Tidak ada server, upload, atau backend. Bisa di-host lewat GitHub Pages.
+A static browser application for inspecting Football Manager `.fmf` files. It is intended as the first reverse-engineering milestone for FM21 skin/resource archives, using `Tato.fmf` as the sample fixture.
 
-## Isi repository
+## Current functions
 
-- `index.html` — antarmuka aplikasi
-- `assets/styles.css` — tampilan desktop dan Android
-- `src/fmf-parser.js` — pemindai header, rentang teks, signature gambar, dan penanda Zstandard
-- `src/app.js` — daftar resource, editor, riwayat, dan ekspor
-- `manifest.json` — metadata PWA dasar
-- `tests/parser-smoke.html` — tes pemindai dasar di browser
-- `docs/FORMAT-NOTES.md` — batasan format dan keamanan ekspor
+- Detects the `02 01 fmf.` signature and nested FMF headers.
+- Finds Zstandard frame signatures and attempts to decompress the index with `fzstd` loaded from jsDelivr.
+- Lists candidate length-prefixed strings from the decompressed index.
+- Scans raw payload for readable text runs and displays offsets.
+- Exports an analysis ZIP containing raw payload, decompressed index, candidate names, and a JSON report.
+- All file processing happens in the browser; no file upload endpoint is used.
 
-## Menjalankan
+## Important limitation
 
-Bisa dibuka lokal dengan browser modern atau di-host di GitHub Pages. Tidak perlu API key dan tidak mengirim file ke server.
+**This is not yet a complete FMF extractor or repacker.** Candidate names are not full verified paths. The app does not yet parse every node record or map each file's data offset and size correctly, so it intentionally does not write guessed files into a fake folder tree. It also cannot rebuild a game-compatible FMF. The analysis ZIP is for reverse engineering only.
 
-### GitHub Pages
+For FM21 graphics/skin archives, the official Football Manager Resource Archiver remains the compatibility reference for extraction and repacking. The goal of future versions is to validate the index parser against official-tool output and then implement safe extraction and repacking.
 
-1. Buat repository baru, misalnya `fmf-studio`.
-2. Unggah seluruh isi folder ini (bukan folder pembungkusnya) ke root repository.
-3. Buka **Settings → Pages**.
-4. Pilih **Deploy from a branch**, branch `main`, folder `/(root)` lalu simpan.
-5. Buka URL Pages yang diberikan GitHub.
+## Run locally
 
-## Fitur
+Because this project uses JavaScript modules, serve the folder over HTTP rather than opening `index.html` as `file://`:
 
-- Pemindaian otomatis saat file dibuka
-- Daftar bagian teks/XML, gambar yang dikenali, dan penanda kompresi
-- Filter dan pencarian dalam bagian yang sudah dipindai
-- Pratinjau gambar jika format dan batas resource bisa dikenali
-- Edit rentang teks dengan perlindungan panjang byte yang sama
-- Undo/Redo, batalkan semua perubahan, salin, ekspor bagian, ekspor file
-- Mendukung file lokal besar sejauh memori browser memungkinkan
+```bash
+python -m http.server 8000
+```
 
-## Batasan penting
+Then visit `http://localhost:8000`.
 
-FMF adalah format proprietary dan struktur antarversi/jenis resource bisa berbeda. Ini merupakan **resource explorer konservatif**, bukan parser lengkap untuk setiap varian FMF. Ia tidak mengurai seluruh indeks kontainer, tidak mendekompresi blok Zstandard, dan tidak bisa menjamin file hasil edit akan diterima game. Untuk mencegah pergeseran offset, editor teks hanya menerima pengeditan dengan jumlah byte UTF-8 yang sama. Resource gambar hanya dipratinjau, belum diganti. Jangan gunakan pada satu-satunya salinan file.
+## Deploy to GitHub Pages
 
-Lihat `docs/FORMAT-NOTES.md` sebelum mengedit file penting.
+1. Create a repository, for example `fmf-studio`.
+2. Upload the **contents** of this folder to the repository root.
+3. Open Settings → Pages.
+4. Select Deploy from a branch → `main` → `/(root)`.
+5. Open the published Pages URL. Internet access is required for the Zstandard decoder CDN.
+
+## Privacy
+
+The selected file stays in browser memory. No upload API is called. If you are working with important files, keep an untouched backup.
